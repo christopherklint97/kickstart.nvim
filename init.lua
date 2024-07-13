@@ -574,7 +574,6 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        clangd = {},
         gopls = {
           settings = {
             gopls = {
@@ -612,8 +611,11 @@ require('lazy').setup({
         bufls = {},
         graphql = {},
         helm_ls = {},
-        tailwindcss = {},
         terraformls = {},
+        hclfmt = {},
+        tflint = {},
+        sqlfluff = {},
+        sqlfmt = {},
 
         lua_ls = {
           -- cmd = {...},
@@ -741,6 +743,21 @@ require('lazy').setup({
       local luasnip = require 'luasnip'
       luasnip.config.setup {}
 
+      -- `:` cmdline setup.
+      cmp.setup.cmdline(':', {
+        mapping = cmp.mapping.preset.cmdline(),
+        sources = cmp.config.sources({
+          { name = 'path' },
+        }, {
+          {
+            name = 'cmdline',
+            option = {
+              ignore_cmds = { 'Man', '!' },
+            },
+          },
+        }),
+      })
+
       cmp.setup {
         snippet = {
           expand = function(args)
@@ -817,27 +834,27 @@ require('lazy').setup({
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'ellisonleao/gruvbox.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'gruvbox'
-      vim.o.background = 'light'
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi 'Comment gui=none'
-    end,
+    --   init = function()
+    --     -- Load the colorscheme here.
+    --     -- Like many other themes, this one has different styles, and you could load
+    --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+    --     vim.cmd.colorscheme 'gruvbox'
+    --     vim.o.background = 'light'
+    --
+    --     -- You can configure highlights by doing something like:
+    --     vim.cmd.hi 'Comment gui=none'
+    --   end,
   },
 
   {
     'Mofiqul/dracula.nvim',
     priority = 1000,
-    -- init = function()
-    --   vim.cmd.colorscheme 'dracula'
-    --   vim.o.background = 'dark'
-    --
-    --   vim.cmd.hi 'Comment gui=none'
-    -- end,
+    init = function()
+      vim.cmd.colorscheme 'dracula'
+      vim.o.background = 'dark'
+
+      vim.cmd.hi 'Comment gui=none'
+    end,
   },
 
   -- Highlight todo, notes, etc in comments
@@ -964,3 +981,4 @@ require 'custom.mappings.general'
 require 'custom.mappings.test'
 require 'custom.mappings.rename'
 require 'custom.mappings.git'
+require 'custom.mappings.lsp'
