@@ -443,6 +443,7 @@ require('lazy').setup({
       { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
+      'nvim-java/nvim-java',
 
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
@@ -636,9 +637,6 @@ require('lazy').setup({
         tflint = {},
         sqlfluff = {},
         sqlfmt = {},
-        jdtls = {
-          autostart = false,
-        },
         gradle_ls = {},
 
         lua_ls = {
@@ -682,6 +680,36 @@ require('lazy').setup({
             -- certain features of an LSP (for example, turning off formatting for tsserver)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
+          end,
+          jdtls = function()
+            -- Determine the project root (this may be enhanced using additional logic, such as finding a '.git' folder)
+            local project_root = vim.fn.getcwd()
+
+            -- Dynamically build a list of source folders
+            local source_paths = {}
+            local possible_sources = { 'src/main/java', 'src/test/java', 'app/src' }
+            for _, rel_path in ipairs(possible_sources) do
+              local full_path = project_root .. '/' .. rel_path
+              if vim.fn.isdirectory(full_path) == 1 then
+                table.insert(source_paths, rel_path)
+              end
+            end
+
+            require('java').setup {
+              -- Your custom jdtls settings goes here
+              root_dir = project_root,
+              settings = {
+                java = {
+                  project = {
+                    sourcePaths = source_paths,
+                  },
+                },
+              },
+            }
+
+            require('lspconfig').jdtls.setup {
+              -- Your custom nvim-java configuration goes here
+            }
           end,
         },
       }
