@@ -443,7 +443,6 @@ require('lazy').setup({
       { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-      'nvim-java/nvim-java',
 
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
@@ -669,7 +668,13 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
       })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      require('mason-tool-installer').setup {
+        ensure_installed = vim.list_extend(ensure_installed, {
+          'java-debug-adapter',
+          'java-test',
+        }),
+      }
 
       require('mason-lspconfig').setup {
         handlers = {
@@ -679,37 +684,12 @@ require('lazy').setup({
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for tsserver)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-          jdtls = function()
-            -- Determine the project root (this may be enhanced using additional logic, such as finding a '.git' folder)
-            local project_root = vim.fn.getcwd()
 
-            -- Dynamically build a list of source folders
-            local source_paths = {}
-            local possible_sources = { 'src/main/java', 'src/test/java', 'app/src' }
-            for _, rel_path in ipairs(possible_sources) do
-              local full_path = project_root .. '/' .. rel_path
-              if vim.fn.isdirectory(full_path) == 1 then
-                table.insert(source_paths, rel_path)
-              end
+            -- Don't call setup for JDTLS Java LSP, as it requires a special setup
+            if server_name == 'jdtls' then
+              return
             end
-
-            require('java').setup {
-              -- Your custom jdtls settings goes here
-              root_dir = project_root,
-              settings = {
-                java = {
-                  project = {
-                    sourcePaths = source_paths,
-                  },
-                },
-              },
-            }
-
-            require('lspconfig').jdtls.setup {
-              -- Your custom nvim-java configuration goes here
-            }
+            require('lspconfig')[server_name].setup(server)
           end,
         },
       }
