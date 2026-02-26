@@ -702,18 +702,12 @@ require('lazy').setup({
       --  You can press `g?` for help in this menu.
       require('mason').setup()
 
-      -- You can add other tools here that you want Mason to install
-      -- for you, so that they are available from within Neovim.
-      local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
-      })
-
+      -- Tools that Mason should auto-install. Everything else can be
+      -- installed on-demand via :Mason when you need it.
       require('mason-tool-installer').setup {
-        ensure_installed = vim.list_extend(ensure_installed, {
-          'java-debug-adapter',
-          'java-test',
-        }),
+        ensure_installed = {
+          'lua_ls',
+        },
       }
 
       require('mason-lspconfig').setup {
@@ -993,7 +987,7 @@ require('lazy').setup({
       -- Prefer git instead of curl in order to improve connectivity in some environments
       require('nvim-treesitter.install').prefer_git = true
       ---@diagnostic disable-next-line: missing-fields
-      require('nvim-treesitter.configs').setup(opts)
+      require('nvim-treesitter').setup(opts)
 
       -- Try to start treesitter for gitcommit if already installed, but never install
       vim.api.nvim_create_autocmd('FileType', {
