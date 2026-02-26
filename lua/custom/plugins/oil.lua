@@ -8,6 +8,9 @@ return {
 
       oil.setup {
         columns = { 'icon' },
+        buf_options = {
+          bufhidden = 'hide',
+        },
         keymaps = {
           ['<C-h>'] = false,
           ['<M-h>'] = 'actions.select_split',

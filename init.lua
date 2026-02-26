@@ -93,6 +93,33 @@ vim.g.maplocalleader = ' '
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
+-- Neovim 0.11+ compat: auto-detect position_encoding for vim.lsp.util.make_position_params
+local orig_make_position_params = vim.lsp.util.make_position_params
+---@diagnostic disable-next-line: duplicate-set-field
+vim.lsp.util.make_position_params = function(window, offset_encoding)
+  if not offset_encoding then
+    local buf = vim.api.nvim_win_get_buf(window or 0)
+    local clients = vim.lsp.get_clients({ bufnr = buf })
+    if clients[1] then
+      offset_encoding = clients[1].offset_encoding
+    end
+  end
+  return orig_make_position_params(window, offset_encoding)
+end
+
+-- Prevent LSP from attaching to non-file buffers (e.g. fugitive://)
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('detach-lsp-from-non-file-buffers', { clear = true }),
+  callback = function(args)
+    local bufname = vim.api.nvim_buf_get_name(args.buf)
+    if bufname:match('^%a+://') and not bufname:match('^file://') then
+      vim.schedule(function()
+        vim.lsp.buf_detach_client(args.buf, args.data.client_id)
+      end)
+    end
+  end,
+})
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -102,7 +129,7 @@ vim.g.have_nerd_font = true
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
-vim.opt.relativenumber = true
+vim.opt.relativenumber = false
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -165,7 +192,6 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -336,6 +362,7 @@ require('lazy').setup({
       {
         'nvim-telescope/telescope-live-grep-args.nvim',
       },
+      { 'nvim-telescope/telescope-smart-history.nvim', dependencies = { 'kkharji/sqlite.lua' } },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -360,15 +387,22 @@ require('lazy').setup({
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
+        defaults = {
+          history = {
+            path = vim.fn.stdpath 'data' .. '/telescope_history.sqlite3',
+            limit = 100,
+          },
+          mappings = {
+            i = {
+              ['<C-j>'] = require('telescope.actions').cycle_history_next,
+              ['<C-k>'] = require('telescope.actions').cycle_history_prev,
+              ['<C-f>'] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
+            },
+            n = {
+              ['<C-f>'] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
+            },
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -377,7 +411,7 @@ require('lazy').setup({
             auto_quoting = true,
             mappings = {
               i = {
-                ['<C-k>'] = require('telescope-live-grep-args.actions').quote_prompt(),
+                ['<C-q>'] = require('telescope-live-grep-args.actions').quote_prompt(),
                 ['<C-i>'] = require('telescope-live-grep-args.actions').quote_prompt { postfix = ' --iglob **/add_word_here/**' },
               },
             },
@@ -388,6 +422,7 @@ require('lazy').setup({
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'smart_history')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -497,19 +532,19 @@ require('lazy').setup({
           -- Jump to the definition of the word under your cursor.
           --  This is where a variable was first declared, or where a function is defined, etc.
           --  To jump back, press <C-t>.
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          map('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
 
           -- Find references for the word under your cursor.
-          map('gr', ":lua require('telescope.builtin').lsp_references { fname_width = 100 }<CR>", '[G]oto [R]eferences')
+          map('gr', vim.lsp.buf.references, '[G]oto [R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          map('gi', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+          map('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
 
           -- Fuzzy find all the symbols in your current document.
           --  Symbols are things like variables, functions, types, etc.
@@ -587,6 +622,10 @@ require('lazy').setup({
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
+      -- Disable the built-in LSP file watcher to avoid ENOENT errors
+      -- (gopls requests watching paths that may not exist yet)
+      capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
+
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --
@@ -618,11 +657,12 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
+        ts_ls = {},
         eslint = {},
         biome = {},
         prettier = {},
         markdown_oxide = {},
-        sqls = {},
+        -- sqls = {},
         yamlls = {},
         yamllint = {},
         dockerls = {},
@@ -717,7 +757,7 @@ require('lazy').setup({
         -- languages here or re-enable it for the disabled ones.
         local disable_filetypes = { c = true, cpp = true }
         return {
-          timeout_ms = 500,
+          timeout_ms = 2000,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
         }
       end,
@@ -730,6 +770,8 @@ require('lazy').setup({
         -- is found.
         javascript = { 'prettierd', 'prettier' },
         typescript = { 'prettierd', 'prettier' },
+        go = { 'goimports', 'gofmt' },
+        json = { 'jq' },
       },
     },
   },
@@ -821,8 +863,6 @@ require('lazy').setup({
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
           ['<CR>'] = cmp.mapping.confirm { select = true },
-          ['<Tab>'] = cmp.mapping.select_next_item(),
-          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -937,6 +977,7 @@ require('lazy').setup({
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'java' },
       -- Autoinstall languages that are not installed
       auto_install = true,
+      ignore_install = { 'gitcommit' }, -- You can list here the languages you don't want to install
       highlight = {
         enable = true,
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
@@ -953,6 +994,14 @@ require('lazy').setup({
       require('nvim-treesitter.install').prefer_git = true
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup(opts)
+
+      -- Try to start treesitter for gitcommit if already installed, but never install
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'gitcommit',
+        callback = function()
+          pcall(vim.treesitter.start, 0, 'gitcommit') -- no install attempt
+        end,
+      })
 
       -- There are additional nvim-treesitter modules that you can use to interact
       -- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -1015,3 +1064,6 @@ require 'custom.mappings.test'
 require 'custom.mappings.rename'
 require 'custom.mappings.git'
 require 'custom.mappings.lsp'
+require 'custom.mappings.quickfix'
+require 'custom.mappings.claude'
+require 'custom.mappings.uuid'
