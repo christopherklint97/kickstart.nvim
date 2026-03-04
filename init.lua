@@ -99,7 +99,7 @@ local orig_make_position_params = vim.lsp.util.make_position_params
 vim.lsp.util.make_position_params = function(window, offset_encoding)
   if not offset_encoding then
     local buf = vim.api.nvim_win_get_buf(window or 0)
-    local clients = vim.lsp.get_clients({ bufnr = buf })
+    local clients = vim.lsp.get_clients { bufnr = buf }
     if clients[1] then
       offset_encoding = clients[1].offset_encoding
     end
@@ -112,7 +112,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('detach-lsp-from-non-file-buffers', { clear = true }),
   callback = function(args)
     local bufname = vim.api.nvim_buf_get_name(args.buf)
-    if bufname:match('^%a+://') and not bufname:match('^file://') then
+    if bufname:match '^%a+://' and not bufname:match '^file://' then
       vim.schedule(function()
         vim.lsp.buf_detach_client(args.buf, args.data.client_id)
       end)
@@ -321,6 +321,20 @@ require('lazy').setup({
         { '<leader>t_', hidden = true },
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>w_', hidden = true },
+        { '<leader>o', group = '[O]cto' },
+        { '<leader>o_', hidden = true },
+        { '<leader>os', group = '[O]cto [S]earch' },
+        { '<leader>os_', hidden = true },
+        { '<leader>or', group = '[O]cto [R]eview' },
+        { '<leader>or_', hidden = true },
+        { '<leader>orc', group = '[O]cto [R]eview [C]omment' },
+        { '<leader>orc_', hidden = true },
+        { '<leader>oc', group = '[O]cto [C]omment' },
+        { '<leader>oc_', hidden = true },
+        { '<leader>oi', group = '[O]cto [I]ssue' },
+        { '<leader>oi_', hidden = true },
+        { '<leader>oa', group = '[O]cto [A]ctions' },
+        { '<leader>oa_', hidden = true },
       }
       -- visual mode
       require('which-key').add {
@@ -460,7 +474,7 @@ require('lazy').setup({
             '--exclude',
             'bundles',
             '--exclude',
-            'output',
+            '.minio',
           },
         }
       end, { desc = '[S]earch [F]iles' })
@@ -954,6 +968,9 @@ require('lazy').setup({
       vim.o.background = 'dark'
 
       vim.cmd.hi 'Comment gui=none'
+      vim.cmd.hi 'DiffAdd guifg=NONE guibg=#2a4a2a'
+      vim.cmd.hi 'DiffChange guifg=NONE guibg=#3a3a2a'
+      vim.cmd.hi 'DiffText guifg=NONE guibg=#4a4a2a'
     end,
   },
 
@@ -1094,3 +1111,4 @@ require 'custom.mappings.lsp'
 require 'custom.mappings.quickfix'
 require 'custom.mappings.claude'
 require 'custom.mappings.uuid'
+require 'custom.mappings.octo'

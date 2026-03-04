@@ -9,10 +9,10 @@ return {
         debounce = 600,
         virtualtext = {
           auto_trigger_ft = { '*' },
-          auto_trigger_ignore_ft = { 'TelescopePrompt', 'TelescopeResults' },
+          auto_trigger_ignore_ft = { 'TelescopePrompt', 'TelescopeResults', 'octo', 'octo_panel' },
           keymap = {
             accept = '<Tab>',
-            accept_line = '<A-a>',
+            accept_line = '<C-e>', -- Cmd+Right via WezTerm
             prev = '<A-[>',
             next = '<A-]>',
             dismiss = '<A-e>',
