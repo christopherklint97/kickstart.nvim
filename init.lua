@@ -397,6 +397,7 @@ require('lazy').setup({
               ['<C-j>'] = require('telescope.actions').cycle_history_next,
               ['<C-k>'] = require('telescope.actions').cycle_history_prev,
               ['<C-f>'] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
+              ['<C-u>'] = false, -- allow default readline Ctrl-U (delete to start of line) for Cmd+Backspace via WezTerm
             },
             n = {
               ['<C-f>'] = require('telescope.actions').send_to_qflist + require('telescope.actions').open_qflist,
@@ -429,7 +430,39 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
-        builtin.find_files { hidden = true, no_ignore = true, file_ignore_patterns = { '%.git/', 'node_modules/', '%.next/' } }
+        builtin.find_files {
+          find_command = {
+            'fd',
+            '--type',
+            'f',
+            '--hidden',
+            '--no-ignore',
+            '--exclude',
+            '.git',
+            '--exclude',
+            'node_modules',
+            '--exclude',
+            '.next',
+            '--exclude',
+            '.yarn',
+            '--exclude',
+            '.webpack',
+            '--exclude',
+            '.cache',
+            '--exclude',
+            '.idea',
+            '--exclude',
+            '.vscode',
+            '--exclude',
+            '.swc',
+            '--exclude',
+            'test-results',
+            '--exclude',
+            'bundles',
+            '--exclude',
+            'output',
+          },
+        }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
