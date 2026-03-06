@@ -8,7 +8,21 @@ map('n', '<leader>od', '<Cmd>Octo pr diff<CR>', { desc = '[O]cto PR [D]iff' })
 map('n', '<leader>oc', '<Cmd>Octo pr checkout<CR>', { desc = '[O]cto PR [C]heckout' })
 map('n', '<leader>om', '<Cmd>Octo pr merge squash<CR>', { desc = '[O]cto PR [M]erge (squash)' })
 map('n', '<leader>oy', '<Cmd>Octo pr url<CR>', { desc = '[O]cto PR cop[Y] URL' })
-map('n', '<leader>ok', '<Cmd>Octo pr checks<CR>', { desc = '[O]cto PR chec[K]s' })
+map('n', '<leader>ok', function()
+  local buf = vim.api.nvim_create_buf(false, true)
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    col = math.floor((vim.o.columns - width) / 2),
+    row = math.floor((vim.o.lines - height) / 2),
+    style = 'minimal',
+    border = 'rounded',
+  })
+  vim.fn.termopen('gh pr checks --watch')
+end, { desc = '[O]cto PR chec[K]s (gh CLI)' })
 
 -- Search
 local function octo_search(query)
@@ -38,6 +52,9 @@ map('n', '<leader>ocd', '<Cmd>Octo comment delete<CR>', { desc = '[O]cto [C]omme
 map('n', '<leader>oal', '<Cmd>terminal gh run list<CR>', { desc = '[O]cto [A]ctions [L]ist runs' })
 map('n', '<leader>oaw', '<Cmd>terminal gh run watch<CR>', { desc = '[O]cto [A]ctions [W]atch latest run' })
 map('n', '<leader>oar', '<Cmd>!gh run rerun --failed<CR>', { desc = '[O]cto [A]ctions [R]erun failed' })
+
+-- Reviewer
+map('n', '<leader>oraa', '<Cmd>Octo reviewer add<CR>', { desc = '[O]cto [R]eviewer [A]dd [A]ssignee' })
 
 -- Issues
 map('n', '<leader>oil', '<Cmd>Octo issue list<CR>', { desc = '[O]cto [I]ssue [L]ist' })

@@ -1,6 +1,7 @@
 return {
   {
-    'pwntester/octo.nvim',
+    'christopherklint97/octo.nvim',
+    branch = 'fix/reviewer-add-empty-args',
     dependencies = {
       'nvim-lua/plenary.nvim',
       'nvim-telescope/telescope.nvim',
@@ -14,6 +15,8 @@ return {
         },
         poll = {
           enabled = true,
+          notify_on_refresh = false,
+          notify_on_change = false,
         },
         mappings = {
           review_diff = {
