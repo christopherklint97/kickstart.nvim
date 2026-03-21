@@ -1,7 +1,6 @@
 return {
   {
-    'christopherklint97/octo.nvim',
-    branch = 'fix/reviewer-add-empty-args',
+    'pwntester/octo.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
       'nvim-telescope/telescope.nvim',
@@ -22,6 +21,8 @@ return {
           review_diff = {
             add_review_comment = { lhs = '<leader>orca', desc = 'add review comment' },
             add_review_suggestion = { lhs = '<leader>orcs', desc = 'add review suggestion' },
+            select_next_entry = { lhs = '<C-j>', desc = 'next changed file' },
+            select_prev_entry = { lhs = '<C-k>', desc = 'previous changed file' },
           },
           review_thread = {
             add_comment = { lhs = '<leader>orca', desc = 'add comment' },
