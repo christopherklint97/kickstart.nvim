@@ -400,6 +400,37 @@ require('lazy').setup({
 
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
+
+      -- Directories to exclude from file/grep searches (shared between find_files and live_grep)
+      local search_excluded_dirs = {
+        '.git',
+        'node_modules',
+        '.next',
+        '.yarn',
+        '.webpack',
+        '.cache',
+        '.idea',
+        '.vscode',
+        '.swc',
+        'test-results',
+        'bundles',
+        '.minio',
+      }
+
+      -- Build fd args: '--exclude', dir, '--exclude', dir, ...
+      local fd_exclude_args = {}
+      for _, dir in ipairs(search_excluded_dirs) do
+        table.insert(fd_exclude_args, '--exclude')
+        table.insert(fd_exclude_args, dir)
+      end
+
+      -- Build rg args: '--glob', '!dir/', '--glob', '!dir/', ...
+      local rg_glob_args = {}
+      for _, dir in ipairs(search_excluded_dirs) do
+        table.insert(rg_glob_args, '--glob')
+        table.insert(rg_glob_args, '!' .. dir .. '/')
+      end
+
       require('telescope').setup {
         defaults = {
           history = {
@@ -424,6 +455,16 @@ require('lazy').setup({
           },
           live_grep_args = {
             auto_quoting = true,
+            vimgrep_arguments = vim.list_extend({
+              'rg',
+              '--color=never',
+              '--no-heading',
+              '--with-filename',
+              '--line-number',
+              '--column',
+              '--smart-case',
+              '--hidden',
+            }, rg_glob_args),
             mappings = {
               i = {
                 ['<C-q>'] = require('telescope-live-grep-args.actions').quote_prompt(),
@@ -445,37 +486,13 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
         builtin.find_files {
-          find_command = {
+          find_command = vim.list_extend({
             'fd',
             '--type',
             'f',
             '--hidden',
             '--no-ignore',
-            '--exclude',
-            '.git',
-            '--exclude',
-            'node_modules',
-            '--exclude',
-            '.next',
-            '--exclude',
-            '.yarn',
-            '--exclude',
-            '.webpack',
-            '--exclude',
-            '.cache',
-            '--exclude',
-            '.idea',
-            '--exclude',
-            '.vscode',
-            '--exclude',
-            '.swc',
-            '--exclude',
-            'test-results',
-            '--exclude',
-            'bundles',
-            '--exclude',
-            '.minio',
-          },
+          }, fd_exclude_args),
         }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
