@@ -1,7 +1,6 @@
 return {
   {
-    'christopherklint97/octo.nvim',
-    branch = 'fix/folds-out-of-range-extmark',
+    'pwntester/octo.nvim',
     dependencies = {
       'nvim-lua/plenary.nvim',
       'nvim-telescope/telescope.nvim',
