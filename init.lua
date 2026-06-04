@@ -973,17 +973,11 @@ require('lazy').setup({
   },
 
   {
+    -- Theme is loaded but NOT activated here. auto-dark-mode.nvim
+    -- (lua/custom/plugins/auto-dark-mode.lua) picks dark vs light to match
+    -- the macOS system appearance. dracula = dark, gruvbox = light.
     'Mofiqul/dracula.nvim',
     priority = 1000,
-    init = function()
-      vim.cmd.colorscheme 'dracula'
-      vim.o.background = 'dark'
-
-      vim.cmd.hi 'Comment gui=none'
-      vim.cmd.hi 'DiffAdd guifg=NONE guibg=#2a4a2a'
-      vim.cmd.hi 'DiffChange guifg=NONE guibg=#3a3a2a'
-      vim.cmd.hi 'DiffText guifg=NONE guibg=#4a4a2a'
-    end,
   },
 
   -- Highlight todo, notes, etc in comments
